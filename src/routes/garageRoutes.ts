@@ -6,11 +6,19 @@ import {
   createGarage,
   updateGarage,
   deleteGarage,
+  getGarageAssignments,
+  assignGarage,
+  unassignGarage,
 } from "../controllers/garageController";
 
 const router = Router();
 
+// Assignments (antes de /:id para evitar conflictos de rutas)
+router.get("/assignments",        validateAdmin, getGarageAssignments);
+router.put("/:id/assign",         validateAdmin, assignGarage);
+router.put("/:id/unassign",       validateAdmin, unassignGarage);
 
+// CRUD
 router.get("/",       validateAdmin, getAllGarages);
 router.post("/",      validateAdmin, createGarage);
 router.put("/:id",    validateAdmin, updateGarage);

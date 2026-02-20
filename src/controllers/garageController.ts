@@ -173,6 +173,96 @@ export const deleteGarage = async (req: Request, res: Response) => {
   }
 };
 
+// ─── ADMIN: ASIGNACIONES ─────────────────────────────────────────────────────
+
+/** GET /admin/garages/assignments — listado completo cochera → unidad */
+export const getGarageAssignments = async (req: Request, res: Response) => {
+  try {
+    const garages = await prisma.garage.findMany({
+      include: {
+        apartment: {
+          select: {
+            id: true, unit: true, floor: true,
+            owner: { select: { id: true, name: true, email: true } },
+            tenants: { select: { id: true, name: true, email: true } }
+          }
+        },
+        vehicles: {
+          select: { id: true, licensePlate: true, brand: true, model: true, color: true,
+            user: { select: { id: true, name: true } }
+          }
+        }
+      },
+      orderBy: { number: "asc" }
+    });
+
+    res.json(garages);
+  } catch (error) {
+    console.error("❌ [GET GARAGE ASSIGNMENTS ERROR]", error);
+    res.status(500).json({ message: "Error al obtener las asignaciones" });
+  }
+};
+
+/** PUT /admin/garages/:id/assign — asignar cochera a un apartamento */
+export const assignGarage = async (req: Request, res: Response) => {
+  try {
+    const id          = parseInt(req.params.id);
+    const { apartmentId } = req.body;
+
+    if (isNaN(id))      return res.status(400).json({ message: "ID de cochera inválido" });
+    if (!apartmentId)   return res.status(400).json({ message: "apartmentId es requerido" });
+
+    const garage = await prisma.garage.findUnique({ where: { id } });
+    if (!garage) return res.status(404).json({ message: "Cochera no encontrada" });
+
+    const apartment = await prisma.apartment.findUnique({ where: { id: apartmentId } });
+    if (!apartment) return res.status(404).json({ message: "Apartamento no encontrado" });
+
+    const updated = await prisma.garage.update({
+      where: { id },
+      data: { apartmentId },
+      include: {
+        apartment: { select: { id: true, unit: true, floor: true } }
+      }
+    });
+
+    console.log(`[ADMIN] Garage ${updated.number} assigned to apt ${apartment.unit}`);
+    res.json(updated);
+  } catch (error) {
+    console.error("❌ [ASSIGN GARAGE ERROR]", error);
+    res.status(500).json({ message: "Error al asignar la cochera" });
+  }
+};
+
+/** PUT /admin/garages/:id/unassign — desasignar cochera de su unidad */
+export const unassignGarage = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "ID de cochera inválido" });
+
+    const garage = await prisma.garage.findUnique({ where: { id } });
+    if (!garage) return res.status(404).json({ message: "Cochera no encontrada" });
+
+    if (!garage.apartmentId) {
+      return res.status(400).json({ message: "La cochera ya no tiene unidad asignada" });
+    }
+
+    const updated = await prisma.garage.update({
+      where: { id },
+      data: { apartmentId: null },
+      include: {
+        apartment: { select: { id: true, unit: true, floor: true } }
+      }
+    });
+
+    console.log(`[ADMIN] Garage ${updated.number} unassigned`);
+    res.json(updated);
+  } catch (error) {
+    console.error("❌ [UNASSIGN GARAGE ERROR]", error);
+    res.status(500).json({ message: "Error al desasignar la cochera" });
+  }
+};
+
 // ─── TENANT ───────────────────────────────────────────────────────────────────
 
 /** GET /garages/my — cocheras asignadas al apartamento del usuario logueado */
