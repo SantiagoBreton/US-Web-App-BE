@@ -14,6 +14,8 @@ beforeAll(async () => {
   console.log('Test setup started');
   
   // Clean the database before starting tests
+  await prisma.vehicle.deleteMany({});
+  await prisma.garage.deleteMany({});
   await prisma.reservation.deleteMany({});
   await prisma.amenity.deleteMany({});
   await prisma.apartment.deleteMany({});
@@ -24,6 +26,8 @@ afterAll(async () => {
   console.log('Test cleanup started');
   
   // Clean the database after all tests
+  await prisma.vehicle.deleteMany({});
+  await prisma.garage.deleteMany({});
   await prisma.reservation.deleteMany({});
   await prisma.amenity.deleteMany({});
   await prisma.apartment.deleteMany({});

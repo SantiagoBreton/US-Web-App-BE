@@ -107,6 +107,38 @@ export const createTestReservation = async (userId: number, amenityId: number, o
   return reservation;
 };
 
+export const createTestGarage = async (overrides: any = {}) => {
+  const randomId = Math.random().toString(36).substring(7);
+  const garage = await prisma.garage.create({
+    data: {
+      number: `TEST-${randomId}`,
+      type:   'fija',
+      status: 'activa',
+      ...overrides
+    }
+  });
+
+  registerTestData('garages', garage.id);
+  return garage;
+};
+
+export const createTestVehicle = async (userId: number, overrides: any = {}) => {
+  const randomId = Math.random().toString(36).substring(7).toUpperCase();
+  const vehicle = await prisma.vehicle.create({
+    data: {
+      licensePlate: `TST${randomId}`,
+      brand:        'Toyota',
+      model:        'Corolla',
+      color:        'Blanco',
+      userId,
+      ...overrides
+    }
+  });
+
+  registerTestData('vehicles', vehicle.id);
+  return vehicle;
+};
+
 export const generateTestEmail = (): string => {
   const randomId = Math.random().toString(36).substring(7);
   return `test-${randomId}@example.com`;
@@ -117,7 +149,9 @@ const testDataRegistry = {
   users: new Set<number>(),
   amenities: new Set<number>(),
   apartments: new Set<number>(),
-  reservations: new Set<number>()
+  reservations: new Set<number>(),
+  garages: new Set<number>(),
+  vehicles: new Set<number>(),
 };
 
 export const registerTestData = (type: keyof typeof testDataRegistry, id: number) => {
@@ -126,6 +160,20 @@ export const registerTestData = (type: keyof typeof testDataRegistry, id: number
 
 export const cleanupRegisteredData = async () => {
   // Clean up in dependency order
+  if (testDataRegistry.vehicles.size > 0) {
+    await prisma.vehicle.deleteMany({
+      where: { id: { in: Array.from(testDataRegistry.vehicles) } }
+    });
+    testDataRegistry.vehicles.clear();
+  }
+
+  if (testDataRegistry.garages.size > 0) {
+    await prisma.garage.deleteMany({
+      where: { id: { in: Array.from(testDataRegistry.garages) } }
+    });
+    testDataRegistry.garages.clear();
+  }
+
   if (testDataRegistry.reservations.size > 0) {
     await prisma.reservation.deleteMany({
       where: { id: { in: Array.from(testDataRegistry.reservations) } }
