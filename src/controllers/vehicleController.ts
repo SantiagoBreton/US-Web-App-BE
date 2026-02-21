@@ -82,7 +82,7 @@ export const createVehicle = async (req: Request, res: Response) => {
       return res.status(409).json({ message: `Ya existe un vehículo con la patente "${licensePlate.toUpperCase()}"` });
     }
 
-    // Si se indica cochera, verificar que exista y esté activa
+    // Si se indica cochera, verificar que exista, esté activa y no tenga otro auto
     if (garageId) {
       const garage = await prisma.garage.findUnique({ where: { id: garageId } });
       if (!garage) {
@@ -90,6 +90,10 @@ export const createVehicle = async (req: Request, res: Response) => {
       }
       if (garage.status === "fuera_de_uso") {
         return res.status(400).json({ message: "No se puede asignar un vehículo a una cochera fuera de uso" });
+      }
+      const occupied = await prisma.vehicle.findFirst({ where: { garageId } });
+      if (occupied) {
+        return res.status(409).json({ message: `La cochera ${garage.number} ya está ocupada por otro vehículo (${occupied.licensePlate})` });
       }
     }
 
@@ -141,6 +145,13 @@ export const updateVehicle = async (req: Request, res: Response) => {
       if (!garage) return res.status(404).json({ message: "La cochera indicada no existe" });
       if (garage.status === "fuera_de_uso") {
         return res.status(400).json({ message: "No se puede asignar un vehículo a una cochera fuera de uso" });
+      }
+      // Permitir que el mismo vehículo retenga su cochera actual
+      if (garageId !== existing.garageId) {
+        const occupied = await prisma.vehicle.findFirst({ where: { garageId } });
+        if (occupied) {
+          return res.status(409).json({ message: `La cochera ${garage.number} ya está ocupada por otro vehículo (${occupied.licensePlate})` });
+        }
       }
     }
 

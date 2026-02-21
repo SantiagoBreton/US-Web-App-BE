@@ -27,6 +27,7 @@ model User {
   gamification UserGamification? @relation("UserGamification")
   vehicles     Vehicle[]         @relation("UserVehicles")
   visitorParkings VisitorParking[] @relation("UserVisitorParkings")
+  garageRequests  GarageRequest[]  @relation("UserGarageRequests")
   resetPasswordToken    String?       @unique
   resetPasswordExpires  DateTime?
   createdAt             DateTime      @default(now())
@@ -537,6 +538,8 @@ model Garage {
 
   vehicles    Vehicle[]  @relation("GarageVehicles")
   visitorParkings VisitorParking[] @relation("GarageVisitorParkings")
+  currentRequests   GarageRequest[] @relation("GarageCurrentRequests")
+  requestedRequests GarageRequest[] @relation("GarageRequestedRequests")
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -597,4 +600,32 @@ model VisitorParking {
   @@index([requestedById])
   @@index([status])
   @@map("visitor_parkings")
+}
+
+model GarageRequest {
+  id                  Int      @id @default(autoincrement())
+
+  userId              Int
+  user                User     @relation("UserGarageRequests", fields: [userId], references: [id], onDelete: Cascade)
+
+  // cochera que el vecino tiene actualmente (null = no tiene ninguna, quiere una nueva)
+  currentGarageId     Int?
+  currentGarage       Garage?  @relation("GarageCurrentRequests", fields: [currentGarageId], references: [id])
+
+  // cochera específica que solicita (null = cualquier disponible)
+  requestedGarageId   Int?
+  requestedGarage     Garage?  @relation("GarageRequestedRequests", fields: [requestedGarageId], references: [id])
+
+  type                String   // "nueva" | "cambio"
+  reason              String?  // motivo opcional
+
+  status              String   @default("pendiente") // "pendiente" | "aprobada" | "rechazada"
+  adminNote           String?  // comentario del admin al resolver
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("garage_requests")
 }
