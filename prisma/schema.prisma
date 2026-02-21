@@ -26,6 +26,7 @@ model User {
   amenityRatings AmenityRating[] @relation("UserRatings")
   gamification UserGamification? @relation("UserGamification")
   vehicles     Vehicle[]         @relation("UserVehicles")
+  visitorParkings VisitorParking[] @relation("UserVisitorParkings")
   resetPasswordToken    String?       @unique
   resetPasswordExpires  DateTime?
   createdAt             DateTime      @default(now())
@@ -86,6 +87,7 @@ model Apartment {
 
   tenants User[]   @relation("TenantApartments")
   garages Garage[] @relation("ApartmentGarages")
+  visitorParkings VisitorParking[] @relation("ApartmentVisitorParkings")
 }
 
 model ClaimCategory {
@@ -534,6 +536,7 @@ model Garage {
   apartment   Apartment? @relation("ApartmentGarages", fields: [apartmentId], references: [id])
 
   vehicles    Vehicle[]  @relation("GarageVehicles")
+  visitorParkings VisitorParking[] @relation("GarageVisitorParkings")
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -564,4 +567,34 @@ model Vehicle {
   @@index([garageId])
   @@index([licensePlate])
   @@map("vehicles")
+}
+
+model VisitorParking {
+  id            Int      @id @default(autoincrement())
+
+  garageId      Int
+  garage        Garage   @relation("GarageVisitorParkings", fields: [garageId], references: [id])
+
+  apartmentId   Int
+  apartment     Apartment @relation("ApartmentVisitorParkings", fields: [apartmentId], references: [id])
+
+  requestedById Int
+  requestedBy   User     @relation("UserVisitorParkings", fields: [requestedById], references: [id])
+
+  visitorName   String?  // nombre del visitante (opcional)
+  licensePlate  String   // patente del auto visitante
+
+  startTime     DateTime
+  endTime       DateTime // máximo 48h desde startTime
+
+  status        String   @default("activa") // "activa" | "cancelada" | "vencida"
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([garageId])
+  @@index([apartmentId])
+  @@index([requestedById])
+  @@index([status])
+  @@map("visitor_parkings")
 }

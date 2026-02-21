@@ -10,7 +10,7 @@ import { initializeUserGamification, updateDailyStreak } from "./gamificationCon
 // POST /register
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, apartmentId } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Es necesario completar todos los campos" });
     }
@@ -18,12 +18,22 @@ export const register = async (req: Request, res: Response) => {
     const userExists = await prisma.user.findUnique({ where: { email } });
     if (userExists) return res.status(400).json({ message: "El usuario ya existe" });
 
+    // Validar que el apartamento existe si se proporcionó
+    const parsedApartmentId = apartmentId ? parseInt(apartmentId) : null;
+    if (parsedApartmentId) {
+      const apartment = await prisma.apartment.findUnique({ where: { id: parsedApartmentId } });
+      if (!apartment) {
+        return res.status(400).json({ message: "El departamento seleccionado no existe" });
+      }
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
-        password: passwordHash
+        password: passwordHash,
+        ...(parsedApartmentId && { apartmentId: parsedApartmentId }),
       }
     });
     
