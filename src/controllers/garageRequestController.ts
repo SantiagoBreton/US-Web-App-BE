@@ -174,6 +174,21 @@ export const adminResolveGarageRequest = async (req: Request, res: Response) => 
       const apartmentId = request.user.apartmentId;
       if (!apartmentId) return res.status(400).json({ message: "El usuario no tiene apartamento asignado" });
 
+      // Si es un cambio, desasignar la cochera antigua y mover el vehículo a la nueva
+      if (request.type === "cambio" && request.currentGarageId) {
+        // Mover el vehículo de la cochera antigua a la nueva (si existe)
+        await prisma.vehicle.updateMany({
+          where: { garageId: request.currentGarageId },
+          data:  { garageId: request.requestedGarageId },
+        });
+        // Desasignar la cochera antigua del apartamento
+        await prisma.garage.update({
+          where: { id: request.currentGarageId },
+          data:  { apartmentId: null },
+        });
+      }
+
+      // Asignar la nueva cochera al apartamento
       await prisma.garage.update({
         where: { id: request.requestedGarageId },
         data: { apartmentId },
