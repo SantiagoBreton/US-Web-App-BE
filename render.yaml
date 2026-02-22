@@ -3,6 +3,7 @@ services:
     name: us-be-api
     runtime: node
     buildCommand: npm install && npm run build
+
     startCommand: npm start
     env: production
     port: 3000
