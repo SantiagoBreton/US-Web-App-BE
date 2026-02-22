@@ -82,13 +82,8 @@ async function startApp() {
       console.log('⚡ Skipping database migration - starting app directly');
     }
     
-    // Register ts-node for TypeScript support
-    require('ts-node').register({
-      project: path.resolve(__dirname, 'tsconfig.json')
-    });
-
-    // Load the main TypeScript file
-    require('./src/index.ts');
+    // Load the compiled JavaScript output
+    require('./dist/index.js');
     
   } catch (error) {
     console.error('❌ App startup failed:', error);

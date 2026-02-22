@@ -11,3 +11,5 @@ services:
       - key: JWT_SECRET  
       - key: EMAIL_USER
       - key: EMAIL_PASS
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=400"
