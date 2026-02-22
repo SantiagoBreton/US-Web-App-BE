@@ -12,6 +12,11 @@ import adminRoutes from "./routes/adminRoutes";
 import ratingRoutes from "./routes/ratings";
 import gamificationRoutes from "./routes/gamificationRoutes";
 import projectFlowRoutes from "./routes/projectFlowRoutes";
+import garageAdminRoutes from "./routes/garageRoutes";
+import { getMyGarages } from "./controllers/garageController";
+import vehicleRoutes from "./routes/vehicleRoutes";
+import visitorParkingRoutes from "./routes/visitorParkingRoutes";
+import garageRequestRoutes from "./routes/garageRequestRoutes";
 import { emailService } from "./services/emailService";
 import { prisma } from "./prismaClient";
 
@@ -42,8 +47,13 @@ app.use("/claims", claimAdhesionRoutes);
 app.use("/", ratingRoutes);
 app.use("/gamification", gamificationRoutes);
 app.use("/projectflow", projectFlowRoutes);
+app.get("/garages/my", requireAuth, getMyGarages);
+app.use("/vehicles", vehicleRoutes);
 
-app.use("/admin", adminRoutes); 
+app.use("/admin", adminRoutes);
+app.use("/admin/garages", garageAdminRoutes);
+app.use("/visitor-parking", visitorParkingRoutes);
+app.use("/garage-requests", garageRequestRoutes);
 
 
 app.get("/dashboard", requireAuth, async (req, res) => {

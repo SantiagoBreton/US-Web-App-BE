@@ -32,6 +32,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead
 } from "../controllers/notificationController";
+import { getAllVehicles } from "../controllers/vehicleController";
 
 const router = Router();
 
@@ -73,5 +74,7 @@ router.delete("/claims/:id", validateAdmin, deleteAdminClaim);
 router.get("/notifications", validateAdmin, getAdminNotifications);
 router.post("/notifications/:id/mark-read", validateAdmin, markNotificationRead);
 router.post("/notifications/mark-all-read", validateAdmin, markAllNotificationsRead);
+
+router.get("/vehicles", validateAdmin, getAllVehicles);
 
 export default router;

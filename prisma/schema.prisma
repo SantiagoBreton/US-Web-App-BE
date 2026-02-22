@@ -25,6 +25,9 @@ model User {
   userNotifications UserNotification[] @relation("UserNotifications")
   amenityRatings AmenityRating[] @relation("UserRatings")
   gamification UserGamification? @relation("UserGamification")
+  vehicles     Vehicle[]         @relation("UserVehicles")
+  visitorParkings VisitorParking[] @relation("UserVisitorParkings")
+  garageRequests  GarageRequest[]  @relation("UserGarageRequests")
   resetPasswordToken    String?       @unique
   resetPasswordExpires  DateTime?
   createdAt             DateTime      @default(now())
@@ -84,6 +87,8 @@ model Apartment {
   owner   User     @relation("OwnedApartments", fields: [ownerId], references: [id])
 
   tenants User[]   @relation("TenantApartments")
+  garages Garage[] @relation("ApartmentGarages")
+  visitorParkings VisitorParking[] @relation("ApartmentVisitorParkings")
 }
 
 model ClaimCategory {
@@ -519,4 +524,108 @@ model MonthlyLeaderboard {
   @@index([userId])
   @@index([levelId])
   @@map("monthly_leaderboards")
+}
+
+model Garage {
+  id          Int       @id @default(autoincrement())
+  number      String
+  location    String?   // "subsuelo 1", "planta baja", etc.
+  type        String    @default("fija") // "fija" | "cortesia" | "visitante"
+  status      String    @default("activa") // "activa" | "fuera_de_uso"
+
+  apartmentId Int?
+  apartment   Apartment? @relation("ApartmentGarages", fields: [apartmentId], references: [id])
+
+  vehicles    Vehicle[]  @relation("GarageVehicles")
+  visitorParkings VisitorParking[] @relation("GarageVisitorParkings")
+  currentRequests   GarageRequest[] @relation("GarageCurrentRequests")
+  requestedRequests GarageRequest[] @relation("GarageRequestedRequests")
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([apartmentId])
+  @@index([type])
+  @@index([status])
+  @@map("garages")
+}
+
+model Vehicle {
+  id           Int      @id @default(autoincrement())
+  licensePlate String
+  brand        String
+  model        String
+  color        String
+
+  userId       Int
+  user         User     @relation("UserVehicles", fields: [userId], references: [id], onDelete: Cascade)
+
+  garageId     Int?
+  garage       Garage?  @relation("GarageVehicles", fields: [garageId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([garageId])
+  @@index([licensePlate])
+  @@map("vehicles")
+}
+
+model VisitorParking {
+  id            Int      @id @default(autoincrement())
+
+  garageId      Int
+  garage        Garage   @relation("GarageVisitorParkings", fields: [garageId], references: [id])
+
+  apartmentId   Int
+  apartment     Apartment @relation("ApartmentVisitorParkings", fields: [apartmentId], references: [id])
+
+  requestedById Int
+  requestedBy   User     @relation("UserVisitorParkings", fields: [requestedById], references: [id])
+
+  visitorName   String?  // nombre del visitante (opcional)
+  licensePlate  String   // patente del auto visitante
+
+  startTime     DateTime
+  endTime       DateTime // máximo 48h desde startTime
+
+  status        String   @default("activa") // "activa" | "cancelada" | "vencida"
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([garageId])
+  @@index([apartmentId])
+  @@index([requestedById])
+  @@index([status])
+  @@map("visitor_parkings")
+}
+
+model GarageRequest {
+  id                  Int      @id @default(autoincrement())
+
+  userId              Int
+  user                User     @relation("UserGarageRequests", fields: [userId], references: [id], onDelete: Cascade)
+
+  // cochera que el vecino tiene actualmente (null = no tiene ninguna, quiere una nueva)
+  currentGarageId     Int?
+  currentGarage       Garage?  @relation("GarageCurrentRequests", fields: [currentGarageId], references: [id])
+
+  // cochera específica que solicita (null = cualquier disponible)
+  requestedGarageId   Int?
+  requestedGarage     Garage?  @relation("GarageRequestedRequests", fields: [requestedGarageId], references: [id])
+
+  type                String   // "nueva" | "cambio"
+  reason              String?  // motivo opcional
+
+  status              String   @default("pendiente") // "pendiente" | "aprobada" | "rechazada"
+  adminNote           String?  // comentario del admin al resolver
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("garage_requests")
 }
