@@ -30,6 +30,9 @@ export const createGarageRequest = async (req: Request, res: Response) => {
     if (type === "cambio" && !currentGarageId) {
       return res.status(400).json({ message: "Para solicitar un cambio debés indicar la cochera actual" });
     }
+    if (!requestedGarageId) {
+      return res.status(400).json({ message: "Debés seleccionar una cochera específica" });
+    }
 
     // Solo una solicitud pendiente por usuario
     const existing = await prisma.garageRequest.findFirst({
