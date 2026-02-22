@@ -17,6 +17,7 @@ import { getMyGarages } from "./controllers/garageController";
 import vehicleRoutes from "./routes/vehicleRoutes";
 import visitorParkingRoutes from "./routes/visitorParkingRoutes";
 import garageRequestRoutes from "./routes/garageRequestRoutes";
+import cortesiaReservationRoutes from "./routes/cortesiaReservationRoutes";
 import { emailService } from "./services/emailService";
 import { prisma } from "./prismaClient";
 
@@ -54,6 +55,7 @@ app.use("/admin", adminRoutes);
 app.use("/admin/garages", garageAdminRoutes);
 app.use("/visitor-parking", visitorParkingRoutes);
 app.use("/garage-requests", garageRequestRoutes);
+app.use("/admin/cortesia-reservations", cortesiaReservationRoutes);
 
 
 app.get("/dashboard", requireAuth, async (req, res) => {
