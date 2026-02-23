@@ -125,3 +125,104 @@ export const updateUserRole = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateUserApartment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { apartmentId } = req.body;
+    const adminUser = (req as any).user;
+
+    console.log(`[ADMIN APARTMENT CHANGE] User ${adminUser.email} attempting to move user ${id} to apartment ${apartmentId}`);
+
+    const userId = parseInt(id || "");
+    if (isNaN(userId)) {
+      return res.status(400).json({ 
+        message: "ID de usuario inválido" 
+      });
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { 
+        id: true, 
+        name: true, 
+        email: true, 
+        apartmentId: true,
+        apartment: {
+          select: { unit: true, floor: true }
+        }
+      }
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ 
+        message: "Usuario no encontrado" 
+      });
+    }
+
+    // Validar el nuevo apartamento si se proporciona
+    if (apartmentId !== null) {
+      if (typeof apartmentId !== "number") {
+        return res.status(400).json({ 
+          message: "El ID del apartamento debe ser un número o null" 
+        });
+      }
+
+      const apartment = await prisma.apartment.findUnique({
+        where: { id: apartmentId },
+        select: { id: true, unit: true, floor: true }
+      });
+
+      if (!apartment) {
+        return res.status(404).json({ 
+          message: "Apartamento no encontrado" 
+        });
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { apartmentId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        apartmentId: true,
+        apartment: {
+          select: {
+            id: true,
+            unit: true,
+            floor: true,
+            rooms: true
+          }
+        }
+      }
+    });
+
+    const previousApartment = targetUser.apartment 
+      ? `${targetUser.apartment.unit} (Piso ${targetUser.apartment.floor})`
+      : "Sin apartamento";
+    
+    const newApartment = updatedUser.apartment 
+      ? `${updatedUser.apartment.unit} (Piso ${updatedUser.apartment.floor})`
+      : "Sin apartamento";
+
+    console.log(`[ADMIN APARTMENT CHANGE] Moved user ${targetUser.email} from ${previousApartment} to ${newApartment}`);
+
+    res.json({
+      message: "Apartamento del usuario actualizado con éxito",
+      user: updatedUser,
+      previousApartment,
+      newApartment,
+      updatedBy: adminUser.email,
+      updatedAt: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error("❌ [ADMIN APARTMENT CHANGE ERROR]", error);
+    res.status(500).json({ 
+      message: "Error al actualizar el apartamento del usuario" 
+    });
+  }
+};

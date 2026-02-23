@@ -2,7 +2,7 @@
 export { getSystemStats } from "./statsController";
 
 // User Management
-export { getAllUsers, updateUserRole } from "./usersController";
+export { getAllUsers, updateUserRole, updateUserApartment } from "./usersController";
 
 // Amenities Management
 export { getAllAmenities } from "../amenitiesController";

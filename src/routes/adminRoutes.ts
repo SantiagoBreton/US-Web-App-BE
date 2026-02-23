@@ -4,6 +4,7 @@ import {
   getSystemStats,
   getAllUsers,
   updateUserRole,
+  updateUserApartment,
   getAllReservations,
   getAllAmenities,
   createAmenity,
@@ -41,6 +42,7 @@ router.get("/stats", validateAdmin, getSystemStats);
 
 router.get("/users", validateAdmin, getAllUsers);
 router.put("/users/:id/role", validateAdmin, updateUserRole);
+router.put("/users/:id/apartment", validateAdmin, updateUserApartment);
 
 
 router.get("/reservations", validateAdmin, getAllReservations);
