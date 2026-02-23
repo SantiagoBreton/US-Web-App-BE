@@ -118,7 +118,7 @@ describe('Admin Controller Tests', () => {
       const response = await request(app)
         .put(`/admin/users/${testUser.id}/role`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ role: 'owner' })
+        .send({ role: 'admin' })
         .expect(200);
 
       expect(response.body.message).toContain('updated successfully');
@@ -127,7 +127,7 @@ describe('Admin Controller Tests', () => {
       const updatedUser = await prisma.user.findUnique({
         where: { id: testUser.id }
       });
-      expect(updatedUser?.role).toBe('owner');
+      expect(updatedUser?.role).toBe('admin');
 
       // Reset role back to tenant
       await prisma.user.update({
@@ -222,7 +222,7 @@ describe('Admin Controller Tests', () => {
     let testOwner: any;
 
     beforeEach(async () => {
-      testOwner = await createTestUser({ role: 'owner' });
+      testOwner = await createTestUser({ role: 'tenant' });
     });
 
     afterEach(async () => {

@@ -70,7 +70,8 @@ INSERT INTO "user_notification_types" (name, label) VALUES
   ('reserva_rechazada', 'Reserva Rechazada')
 ON CONFLICT (name) DO NOTHING;
 
--- 7. USUARIOS (Admin y Owners primero, sin apartmentId)
+-- 7. USUARIOS (Admin y Propietarios primero, sin apartmentId)
+-- Nota: Ya no existe el rol 'owner', todos los propietarios son 'tenant'
 -- Admin (password: 12345A)
 INSERT INTO "User" (name, email, password, role, "createdAt") 
 VALUES (
@@ -82,29 +83,29 @@ VALUES (
 )
 ON CONFLICT (email) DO NOTHING;
 
--- Owner 1
+-- Propietario 1 (tenant que posee departamento)
 INSERT INTO "User" (name, email, password, role, "createdAt") 
 VALUES (
   'Juan Pérez',
   'juan.perez@gmail.com',
   '$2b$10$YhVGZ0R3c3xh5iKw5WZfbeJ9BfQGqH5vGZJ4oN/XWZJqHZLQKW4G.',
-  'owner',
+  'tenant',
   NOW()
 )
 ON CONFLICT (email) DO NOTHING;
 
--- Owner 2
+-- Propietario 2 (tenant que posee departamento)
 INSERT INTO "User" (name, email, password, role, "createdAt") 
 VALUES (
   'Carlos Rodríguez',
   'carlos.rodriguez@gmail.com',
   '$2b$10$YhVGZ0R3c3xh5iKw5WZfbeJ9BfQGqH5vGZJ4oN/XWZJqHZLQKW4G.',
-  'owner',
+  'tenant',
   NOW()
 )
 ON CONFLICT (email) DO NOTHING;
 
--- 8. APARTAMENTOS (después de owners, antes de tenants)
+-- 8. APARTAMENTOS (después de propietarios, antes de inquilinos)
 INSERT INTO "Apartment" (unit, floor, "areaM2", observations, rooms, "ownerId") 
 VALUES
   ('101', 1, 65.5, 'Apartamento luminoso con vista al parque', 2, 
@@ -242,8 +243,8 @@ VALUES (
 -- ============================================
 -- CREDENCIALES:
 -- admin@edificio.com / 12345A (Admin)
--- juan.perez@email.com / 12345A (Owner)
--- carlos.rodriguez@email.com / 12345A (Owner)
+-- juan.perez@email.com / 12345A (Tenant - Propietario)
+-- carlos.rodriguez@email.com / 12345A (Tenant - Propietario)
 -- maria.gonzalez@email.com / 12345A (Tenant)
 -- ana.martinez@email.com / 12345A (Tenant)
 -- pedro.lopez@email.com / 12345A (Tenant)

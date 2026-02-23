@@ -72,10 +72,10 @@ export const updateUserRole = async (req: Request, res: Response) => {
 
     console.log(`[ADMIN ROLE CHANGE] User ${adminUser.email} attempting to change user ${id} role to ${role}`);
 
-    const validRoles = ["admin", "tenant", "owner"];
+    const validRoles = ["admin", "tenant"];
     if (!role || !validRoles.includes(role)) {
       return res.status(400).json({ 
-        message: "Rol inválido. Debe ser: admin, tenant o owner" 
+        message: "Rol inválido. Debe ser: admin o tenant" 
       });
     }
 

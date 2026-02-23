@@ -55,13 +55,13 @@ export const createApartment = async (req: Request, res: Response) => {
 
       if (!owner) {
         return res.status(404).json({ 
-          message: "Owner no encontrado" 
+          message: "Propietario no encontrado" 
         });
       }
 
-      if (owner.role !== "owner" && owner.role !== "admin") {
+      if (owner.role !== "tenant" && owner.role !== "admin") {
         return res.status(400).json({ 
-          message: "El owner debe tener el rol de 'owner' o 'admin'" 
+          message: "El propietario debe tener el rol de 'tenant' o 'admin'" 
         });
       }
     }
@@ -232,13 +232,13 @@ export const updateApartment = async (req: Request, res: Response) => {
 
         if (!owner) {
           return res.status(404).json({ 
-            message: "Owner not found" 
+            message: "Propietario no encontrado" 
           });
         }
 
-        if (owner.role !== "owner" && owner.role !== "admin") {
+        if (owner.role !== "tenant" && owner.role !== "admin") {
           return res.status(400).json({ 
-            message: "Owner debe tener el rol de 'owner' or 'admin'" 
+            message: "El propietario debe tener el rol de 'tenant' o 'admin'" 
           });
         }
 

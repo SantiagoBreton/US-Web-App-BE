@@ -12,7 +12,7 @@ model User {
   name      String
   email     String    @unique
   password  String
-  role      String?   @default("tenant") // "owner" | "tenant" | "admin"
+  role      String?   @default("tenant") // "tenant" | "admin"
 
   apartmentId Int?
   apartment   Apartment? @relation("TenantApartments", fields: [apartmentId], references: [id])

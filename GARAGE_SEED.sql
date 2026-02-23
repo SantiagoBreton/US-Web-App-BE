@@ -86,14 +86,14 @@ VALUES
    (SELECT id FROM "garages" WHERE number = 'C-03' LIMIT 1),
    NOW(), NOW()),
 
-  -- Juan Pérez (owner) → cochera C-04 (asignada a apt 301 que es de Carlos)
-  -- En este caso el owner tiene un vehículo sin cochera asignada (visita)
+  -- Juan Pérez (tenant propietario) → cochera C-04 (asignada a apt 301 que es de Carlos)
+  -- En este caso el propietario tiene un vehículo sin cochera asignada (visita)
   ('MNO 345', 'BMW', 'X3', 'Azul',
    (SELECT id FROM "User" WHERE email = 'juan.perez@gmail.com'),
    NULL,
    NOW(), NOW()),
 
-  -- Carlos Rodríguez (owner) → cochera C-05 (asignada a apt 202 que es de Juan)
+  -- Carlos Rodríguez (tenant propietario) → cochera C-05 (asignada a apt 202 que es de Juan)
   ('PQR 678', 'Mercedes-Benz', 'C200', 'Plateado',
    (SELECT id FROM "User" WHERE email = 'carlos.rodriguez@gmail.com'),
    (SELECT id FROM "garages" WHERE number = 'C-05' LIMIT 1),

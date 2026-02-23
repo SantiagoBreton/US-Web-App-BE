@@ -2,9 +2,12 @@
 
 Este archivo contiene todos los comandos SQL necesarios para poblar tu base de datos PostgreSQL con datos iniciales funcionales.
 
+> **⚠️ IMPORTANTE - Actualización de Roles:** Ya no existe el rol `owner`. El sistema ahora solo maneja dos roles: `tenant` y `admin`. 
+> Los propietarios de departamentos son usuarios con rol `tenant` que tienen departamentos asignados como `ownerId`.
+
 ## 📋 Índice
 
-1. [Usuarios (Admin, Owners, Tenants)](#1-usuarios)
+1. [Usuarios (Admin, Tenants)](#1-usuarios)
 2. [Apartamentos](#2-apartamentos)
 3. [Amenities](#3-amenities)
 4. [Estados de Reserva](#4-estados-de-reserva)
@@ -63,14 +66,17 @@ VALUES (
 );
 ```
 
-#### 1.2 Usuario Propietario (Owner)
+#### 1.2 Usuario Propietario (Tenant con Departamento)
+
+**Nota:** Ya no existe el rol 'owner'. Los propietarios de departamentos son usuarios con rol 'tenant'.
+
 ```sql
 INSERT INTO "User" (name, email, password, role, "createdAt") 
 VALUES (
   'Juan Pérez',
   'juan.perez@email.com',
   '$2b$10$YhVGZ0R3c3xh5iKw5WZfbeJ9BfQGqH5vGZJ4oN/XWZJqHZLQKW4G.',
-  'owner',
+  'tenant',
   NOW()
 );
 ```
@@ -90,13 +96,13 @@ VALUES (
 
 #### 1.4 Más usuarios de ejemplo
 ```sql
--- Propietario 2
+-- Propietario 2 (tenant con departamento)
 INSERT INTO "User" (name, email, password, role, "createdAt") 
 VALUES (
   'Carlos Rodríguez',
   'carlos.rodriguez@email.com',
   '$2b$10$YhVGZ0R3c3xh5iKw5WZfbeJ9BfQGqH5vGZJ4oN/XWZJqHZLQKW4G.',
-  'owner',
+  'tenant',
   NOW()
 );
 
@@ -625,7 +631,7 @@ VALUES
 
 | Tabla | Cantidad | Descripción |
 |-------|----------|-------------|
-| **Users** | 6 | 1 Admin, 2 Owners, 3 Tenants |
+| **Users** | 6 | 1 Admin, 5 Tenants (2 propietarios) |
 | **Apartments** | 5 | Apartamentos distribuidos en 3 pisos |
 | **Amenities** | 8 | Instalaciones del edificio |
 | **ReservationStatus** | 4 | Estados posibles de reservas |
@@ -650,7 +656,7 @@ Role: Admin
 ```
 Email: juan.perez@email.com
 Password: 12345A
-Role: Owner
+Role: Tenant (Propietario)
 ```
 
 ```
