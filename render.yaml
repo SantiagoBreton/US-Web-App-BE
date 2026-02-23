@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: us-be-api
+    runtime: node
+    buildCommand: npm install && npm run build
+
+    startCommand: npm start
+    env: production
+    port: 3000
+    envVars:
+      - key: DATABASE_URL
+      - key: JWT_SECRET  
+      - key: EMAIL_USER
+      - key: EMAIL_PASS
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=400"

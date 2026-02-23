@@ -1,0 +1,660 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      String?   @default("tenant") // "tenant" | "admin"
+
+  apartmentId Int?
+  apartment   Apartment? @relation("TenantApartments", fields: [apartmentId], references: [id])
+  ownedApartments Apartment[] @relation("OwnedApartments")
+
+  reservations Reservation[] @relation("UserReservations")
+  claims       Claim[]       @relation("UserClaims")
+  claimAdhesions ClaimAdhesion[] @relation("UserClaimAdhesions")
+  adminNotifications AdminNotification[] @relation("AdminNotifications")
+  userNotifications UserNotification[] @relation("UserNotifications")
+  amenityRatings AmenityRating[] @relation("UserRatings")
+  gamification UserGamification? @relation("UserGamification")
+  vehicles     Vehicle[]         @relation("UserVehicles")
+  visitorParkings VisitorParking[] @relation("UserVisitorParkings")
+  garageRequests  GarageRequest[]  @relation("UserGarageRequests")
+  cortesiaReservations CortesiaReservation[] @relation("AdminCortesiaReservations")
+  resetPasswordToken    String?       @unique
+  resetPasswordExpires  DateTime?
+  createdAt             DateTime      @default(now())
+}
+
+model Amenity {
+  id           Int           @id @default(autoincrement())
+  name         String
+  capacity     Int
+  maxDuration  Int 
+  openTime     String?  
+  closeTime    String? 
+  isActive     Boolean       @default(true)
+  requiresApproval Boolean   @default(false)
+  reservations Reservation[]
+  ratings      AmenityRating[]
+}
+
+model ReservationStatus {
+  id     Int    @id @default(autoincrement())
+  name   String @unique // "pendiente", "confirmada", "cancelada", "finalizada"
+  label  String 
+  
+  reservations Reservation[]
+  
+  @@map("reservation_statuses")
+}
+
+model Reservation {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation("UserReservations", fields: [userId], references: [id])
+  userId    Int
+  amenity   Amenity   @relation(fields: [amenityId], references: [id])
+  amenityId Int
+  startTime DateTime
+  endTime   DateTime
+  statusId  Int       @default(1)
+  status    ReservationStatus @relation(fields: [statusId], references: [id])
+  hiddenFromUser Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  notifications UserNotification[] @relation("ReservationNotifications")
+  adminNotifications AdminNotification[] @relation("AdminReservationNotifications")
+
+  @@index([amenityId, startTime, endTime])
+  @@index([statusId])
+}
+
+model Apartment {
+  id           Int      @id @default(autoincrement())
+  unit         String
+  floor        Int
+  areaM2       Float?
+  observations String?
+  rooms       Int
+
+  ownerId Int?
+  owner   User?     @relation("OwnedApartments", fields: [ownerId], references: [id])
+
+  tenants User[]   @relation("TenantApartments")
+  garages Garage[] @relation("ApartmentGarages")
+  visitorParkings VisitorParking[] @relation("ApartmentVisitorParkings")
+}
+
+model ClaimCategory {
+  id     Int    @id @default(autoincrement())
+  name   String @unique // "ascensor", "plomeria", "electricidad", "temperatura", "areas_comunes", "edificio", "otro"
+  label  String 
+  icon   String?
+  color  String? 
+  
+  claims Claim[]
+  
+  @@map("claim_categories")
+}
+
+model ClaimPriority {
+  id     Int    @id @default(autoincrement())
+  name   String @unique // "baja", "media", "alta", "urgente"
+  label  String
+  level  Int
+  color  String?
+  
+  claims Claim[]
+  
+  @@map("claim_priorities")
+}
+
+model ClaimStatus {
+  id     Int    @id @default(autoincrement())
+  name   String @unique // "pendiente", "en_progreso", "resuelto", "rechazado"
+  label  String 
+  color  String?
+  
+  claims Claim[]
+  
+  @@map("claim_statuses")
+}
+
+model Claim {
+  id          Int      @id @default(autoincrement())
+  subject     String
+  categoryId  Int      @default(7)
+  category    ClaimCategory @relation(fields: [categoryId], references: [id])
+  description String
+  location    String
+  priorityId  Int      @default(2)
+  priority    ClaimPriority @relation(fields: [priorityId], references: [id])
+  statusId    Int      @default(1)
+  status      ClaimStatus @relation(fields: [statusId], references: [id])
+  adminNotes  String?
+  isAnonymous Boolean  @default(false)
+  
+  projectFlowTaskId String? 
+  
+  userId      Int
+  user        User     @relation("UserClaims", fields: [userId], references: [id])
+  adhesions   ClaimAdhesion[] @relation("ClaimAdhesions")
+  notifications AdminNotification[] @relation("ClaimNotifications")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([statusId])
+  @@index([categoryId])
+  @@index([priorityId])
+  @@index([projectFlowTaskId])
+}
+
+model ClaimAdhesion {
+  id           Int      @id @default(autoincrement())
+  claimId      Int
+  userId       Int
+  isSupport    Boolean  @default(true) // Likes/dislike de vecinos. true = de acuerdo, false = en desacuerdo
+  
+  claim        Claim    @relation("ClaimAdhesions", fields: [claimId], references: [id], onDelete: Cascade)
+  user         User     @relation("UserClaimAdhesions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([claimId, userId], name: "unique_user_claim_adhesion")
+  @@index([claimId])
+  @@index([userId])
+}
+
+model AdminNotificationType {
+  id     Int    @id @default(autoincrement())
+  name   String @unique // "nuevo_reclamo" | "reclamo_urgente" | "reserva_pendiente"
+  label  String
+  
+  notifications AdminNotification[]
+  
+  @@map("admin_notification_types")
+}
+
+model UserNotificationType {
+  id     Int    @id @default(autoincrement())
+  name   String @unique // "reserva_confirmada" | "reserva_cancelada" | "reserva_modificada"
+  label  String
+  
+  notifications UserNotification[]
+  
+  @@map("user_notification_types")
+}
+
+model AdminNotification {
+  id               Int      @id @default(autoincrement())
+  adminId          Int 
+  claimId          Int? 
+  reservationId    Int?
+  typeId           Int
+  type             AdminNotificationType @relation(fields: [typeId], references: [id])
+  isRead           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  readAt           DateTime?
+  
+  admin            User     @relation("AdminNotifications", fields: [adminId], references: [id], onDelete: Cascade)
+  claim            Claim?   @relation("ClaimNotifications", fields: [claimId], references: [id], onDelete: Cascade)
+  reservation      Reservation? @relation("AdminReservationNotifications", fields: [reservationId], references: [id], onDelete: Cascade)
+  
+  @@index([adminId])
+  @@index([claimId])
+  @@index([reservationId])
+  @@index([typeId])
+  @@index([isRead])
+  @@index([adminId, isRead])
+  @@map("admin_notifications")
+}
+
+model UserNotification {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  reservationId    Int?
+  typeId           Int
+  type             UserNotificationType @relation(fields: [typeId], references: [id])
+  title            String
+  message          String 
+  isRead           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  readAt           DateTime?
+  
+  user             User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  reservation      Reservation? @relation("ReservationNotifications", fields: [reservationId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([reservationId])
+  @@index([typeId])
+  @@index([isRead])
+  @@index([userId, isRead])
+  @@map("user_notifications")
+}
+
+model AmenityRating {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  amenityId        Int
+  overallRating    Float
+  cleanliness      Int?
+  equipment        Int?
+  comfort          Int?
+  compliance       Int?
+  comment          String?
+  createdAt        DateTime @default(now())
+  
+  user             User     @relation("UserRatings", fields: [userId], references: [id], onDelete: Cascade)
+  amenity          Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, amenityId])
+  @@index([amenityId])
+  @@index([userId])
+  @@map("amenity_ratings")
+}
+
+model GamificationLevel {
+  id              Int      @id @default(autoincrement())
+  key             String   @unique // "bronce", "plata", "oro", "platino", "diamante"
+  displayName     String   // "Nuevo Vecino", "Buen Vecino", "Gran Vecino", etc.
+  minPoints       Int      // Puntos mínimos para alcanzar este nivel
+  maxPoints       Int?     // null para el nivel más alto
+  order           Int      // 1, 2, 3, 4, 5 para ordenamiento
+  icon            String   
+  color           String   
+  badgeImage      String?  
+  
+  users           UserGamification[] @relation("UserLevel")
+  leaderboards    MonthlyLeaderboard[] @relation("LeaderboardLevel")
+  themes          GamificationTheme[] @relation("ThemeRequiredLevel")
+  frames          GamificationFrame[] @relation("FrameRequiredLevel")
+  effects         GamificationEffect[] @relation("EffectRequiredLevel")
+  titles          GamificationTitle[] @relation("TitleRequiredLevel")
+  
+  @@index([key])
+  @@index([order])
+  @@map("gamification_levels")
+}
+
+model GamificationTheme {
+  id              Int      @id @default(autoincrement())
+  key             String   @unique // "default", "sunset", "ocean", "forest", etc.
+  displayName     String   // "Predeterminado", "Atardecer", "Océano", etc.
+  primaryColor    String   
+  secondaryColor  String   
+  gradient        String?  
+  requiredLevelId Int      // Nivel mínimo requerido
+  requiredLevel   GamificationLevel @relation("ThemeRequiredLevel", fields: [requiredLevelId], references: [id])
+  order           Int      @default(0)
+  isActive        Boolean  @default(true)
+  
+  users           UserGamification[] @relation("UserTheme")
+  
+  @@index([key])
+  @@index([requiredLevelId])
+  @@map("gamification_themes")
+}
+
+model GamificationFrame {
+  id              Int      @id @default(autoincrement())
+  key             String   @unique // "none", "silver", "gold", "platinum", "diamond", "legendary"
+  displayName     String   // "Sin Marco", "Marco Plateado", etc.
+  cssClass        String   
+  animation       String?  
+  requiredLevelId Int      // Nivel mínimo requerido
+  requiredLevel   GamificationLevel @relation("FrameRequiredLevel", fields: [requiredLevelId], references: [id])
+  order           Int      @default(0)
+  isActive        Boolean  @default(true)
+  
+  users           UserGamification[] @relation("UserFrame")
+  
+  @@index([key])
+  @@index([requiredLevelId])
+  @@map("gamification_frames")
+}
+
+model GamificationEffect {
+  id              Int      @id @default(autoincrement())
+  key             String   @unique // "none", "shimmer", "glow", "sparkle", "holographic", "rainbow", "trail"
+  displayName     String   // "Sin Efecto", "Brillo", "Resplandor", etc.
+  cssClass        String   
+  animation       String?  
+  requiredLevelId Int      // Nivel mínimo requerido
+  requiredLevel   GamificationLevel @relation("EffectRequiredLevel", fields: [requiredLevelId], references: [id])
+  order           Int      @default(0)
+  isActive        Boolean  @default(true)
+  
+  users           UserGamification[] @relation("UserEffect")
+  
+  @@index([key])
+  @@index([requiredLevelId])
+  @@map("gamification_effects")
+}
+
+model GamificationTitle {
+  id              Int      @id @default(autoincrement())
+  key             String   @unique // "novato", "vecino_activo", "guardian_comunitario", "leyenda_urbana", "custom"
+  displayName     String   // "Novato", "Vecino Activo", "Guardián Comunitario", etc.
+  description     String?  // Descripción de cómo se obtiene el título
+  requiredLevelId Int      // Nivel mínimo requerido
+  requiredLevel   GamificationLevel @relation("TitleRequiredLevel", fields: [requiredLevelId], references: [id])
+  isActive        Boolean  @default(true)  // Permite desactivar títulos temporalmente
+  
+  users           UserGamification[] @relation("UserTitle")
+  
+  @@index([key])
+  @@index([requiredLevelId])
+  @@map("gamification_titles")
+}
+
+model AchievementCategory {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique // "reservations", "social", "ratings", "claims"
+  displayName  String   // "Reservas", "Social", "Calificaciones", "Reclamos"
+  description  String?
+  icon         String   
+  color        String   
+  order        Int      @default(0)
+  
+  achievements Achievement[] @relation("AchievementCategory")
+  
+  @@index([key])
+  @@map("achievement_categories")
+}
+
+model AchievementRarity {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique // "common", "rare", "epic", "legendary"
+  displayName  String   // "Común", "Raro", "Épico", "Legendario"
+  color        String   
+  glowEffect   String?  
+  order        Int      @default(0)
+  
+  achievements Achievement[] @relation("AchievementRarity")
+  
+  @@index([key])
+  @@map("achievement_rarities")
+}
+
+model UserGamification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation("UserGamification", fields: [userId], references: [id], onDelete: Cascade)
+  totalPoints       Int      @default(0)
+  levelId           Int      @default(1) 
+  level             GamificationLevel @relation("UserLevel", fields: [levelId], references: [id])
+  
+  selectedThemeId   Int      @default(1) 
+  selectedTheme     GamificationTheme @relation("UserTheme", fields: [selectedThemeId], references: [id])
+  
+  selectedFrameId   Int      @default(1) 
+  selectedFrame     GamificationFrame @relation("UserFrame", fields: [selectedFrameId], references: [id])
+  
+  selectedEffectId  Int      @default(1) 
+  selectedEffect    GamificationEffect @relation("UserEffect", fields: [selectedEffectId], references: [id])
+  
+  selectedTitleId   Int?     
+  selectedTitle     GamificationTitle? @relation("UserTitle", fields: [selectedTitleId], references: [id])
+  customTitleText   String?  // Solo para título "custom" (nivel diamante)
+  
+  // Estadísticas para achievements
+  reservationsCompleted  Int  @default(0)
+  reservationsCancelled  Int  @default(0)
+  ratingsGiven          Int  @default(0)
+  claimsCreated         Int  @default(0)
+  claimsResolved        Int  @default(0)
+  claimsRejected        Int  @default(0)
+  adhesionsGiven        Int  @default(0)
+  adhesionsReceived     Int  @default(0)
+  negativeAdhesions     Int  @default(0)  // Adhesiones negativas recibidas (isSupport=false)
+  consecutiveDays       Int  @default(0)
+  lastLoginDate         DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  pointsHistory     PointTransaction[]
+  achievements      UserAchievement[]
+  favoriteBadges    FavoriteBadge[]
+  
+  @@index([userId])
+  @@index([totalPoints])
+  @@index([levelId])
+  @@map("user_gamification")
+}
+
+model PointTransaction {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  userGamification UserGamification @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  points          Int      
+  action          String   
+  description     String   
+  reservationId   Int?
+  claimId         Int?
+  ratingId        Int?
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("point_transactions")
+}
+
+model Achievement {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique // "first_reservation", "week_streak", "rating_master"
+  displayName String   // "Primera Reserva"
+  description String   
+  icon        String  
+  categoryId  Int
+  category    AchievementCategory @relation("AchievementCategory", fields: [categoryId], references: [id])
+  pointsReward Int     @default(0)
+  rarityId    Int      @default(1)
+  rarity      AchievementRarity @relation("AchievementRarity", fields: [rarityId], references: [id])
+  
+  // Condiciones para desbloquear
+  requiredCount    Int?    // Ej: 5 reservas
+  requiredAction   String? // Ej: "complete_5_reservations"
+  isRepeatable     Boolean @default(false)
+  isActive         Boolean @default(true)
+  
+  users       UserAchievement[]
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([key])
+  @@index([categoryId])
+  @@index([rarityId])
+  @@index([isActive])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  userGamification UserGamification @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  achievementId   Int
+  achievement     Achievement @relation(fields: [achievementId], references: [id])
+  
+  unlockedAt      DateTime @default(now())
+  timesEarned     Int      @default(1) // Para logros repetibles
+  
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@map("user_achievements")
+}
+
+model FavoriteBadge {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  userGamification UserGamification @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  achievementId   Int
+  displayOrder    Int      @default(0) // 0-5 para el showcase (máximo 6 badges)
+  
+  @@unique([userId, achievementId])
+  @@index([userId, displayOrder])
+  @@map("favorite_badges")
+}
+
+model MonthlyLeaderboard {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  month     String   // "2025-11" formato YYYY-MM
+  points    Int
+  rank      Int
+  
+  levelId   Int    
+  level     GamificationLevel @relation("LeaderboardLevel", fields: [levelId], references: [id])
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, month])
+  @@index([month, rank])
+  @@index([userId])
+  @@index([levelId])
+  @@map("monthly_leaderboards")
+}
+
+model Garage {
+  id          Int       @id @default(autoincrement())
+  number      String
+  location    String?   // "subsuelo 1", "planta baja", etc.
+  type        String    @default("fija") // "fija" | "cortesia" | "visitante"
+  status      String    @default("activa") // "activa" | "fuera_de_uso"
+
+  apartmentId Int?
+  apartment   Apartment? @relation("ApartmentGarages", fields: [apartmentId], references: [id])
+
+  vehicles    Vehicle[]  @relation("GarageVehicles")
+  visitorParkings VisitorParking[] @relation("GarageVisitorParkings")
+  currentRequests   GarageRequest[] @relation("GarageCurrentRequests")
+  requestedRequests GarageRequest[] @relation("GarageRequestedRequests")
+  cortesiaReservations CortesiaReservation[] @relation("GarageCortesiaReservations")
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([apartmentId])
+  @@index([type])
+  @@index([status])
+  @@map("garages")
+}
+
+model Vehicle {
+  id           Int      @id @default(autoincrement())
+  licensePlate String
+  brand        String
+  model        String
+  color        String
+
+  userId       Int
+  user         User     @relation("UserVehicles", fields: [userId], references: [id], onDelete: Cascade)
+
+  garageId     Int?
+  garage       Garage?  @relation("GarageVehicles", fields: [garageId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([garageId])
+  @@index([licensePlate])
+  @@map("vehicles")
+}
+
+model VisitorParking {
+  id            Int      @id @default(autoincrement())
+
+  garageId      Int
+  garage        Garage   @relation("GarageVisitorParkings", fields: [garageId], references: [id])
+
+  apartmentId   Int
+  apartment     Apartment @relation("ApartmentVisitorParkings", fields: [apartmentId], references: [id])
+
+  requestedById Int
+  requestedBy   User     @relation("UserVisitorParkings", fields: [requestedById], references: [id])
+
+  visitorName   String?  // nombre del visitante (opcional)
+  licensePlate  String   // patente del auto visitante
+
+  startTime     DateTime
+  endTime       DateTime // máximo 48h desde startTime
+
+  status        String   @default("activa") // "activa" | "cancelada" | "vencida"
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([garageId])
+  @@index([apartmentId])
+  @@index([requestedById])
+  @@index([status])
+  @@map("visitor_parkings")
+}
+
+model GarageRequest {
+  id                  Int      @id @default(autoincrement())
+
+  userId              Int
+  user                User     @relation("UserGarageRequests", fields: [userId], references: [id], onDelete: Cascade)
+
+  // cochera que el vecino tiene actualmente (null = no tiene ninguna, quiere una nueva)
+  currentGarageId     Int?
+  currentGarage       Garage?  @relation("GarageCurrentRequests", fields: [currentGarageId], references: [id])
+
+  // cochera específica que solicita (null = cualquier disponible)
+  requestedGarageId   Int?
+  requestedGarage     Garage?  @relation("GarageRequestedRequests", fields: [requestedGarageId], references: [id])
+
+  type                String   // "nueva" | "cambio"
+  reason              String?  // motivo opcional
+
+  status              String   @default("pendiente") // "pendiente" | "aprobada" | "rechazada"
+  adminNote           String?  // comentario del admin al resolver
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("garage_requests")
+}
+
+model CortesiaReservation {
+  id          Int      @id @default(autoincrement())
+
+  garageId    Int
+  garage      Garage   @relation("GarageCortesiaReservations", fields: [garageId], references: [id])
+
+  createdById Int
+  createdBy   User     @relation("AdminCortesiaReservations", fields: [createdById], references: [id])
+
+  personName  String   // nombre de la persona/empresa
+  licensePlate String? // patente (opcional)
+  reason      String   // motivo de la reserva (obligatorio)
+
+  startTime   DateTime
+  endTime     DateTime // máximo 8h desde startTime
+
+  status      String   @default("activa") // "activa" | "cancelada" | "vencida"
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([garageId])
+  @@index([createdById])
+  @@index([status])
+  @@map("cortesia_reservations")
+}
