@@ -57,7 +57,8 @@ export const getAllApartments = async (req: Request, res: Response) => {
     const apartments = await _fetchApartments(true);
 
     const formattedApartments = apartments.map(apartment => {
-      const isOccupied = apartment.tenants.length > 0;
+      // Un apartamento está ocupado si tiene inquilinos O tiene propietario
+      const isOccupied = apartment.tenants.length > 0 || apartment.owner !== null;
       const tenant = apartment.tenants.length > 0 ? apartment.tenants[0] : null;
 
       return {
