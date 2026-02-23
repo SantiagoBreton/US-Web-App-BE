@@ -84,8 +84,8 @@ model Apartment {
   observations String?
   rooms       Int
 
-  ownerId Int
-  owner   User     @relation("OwnedApartments", fields: [ownerId], references: [id])
+  ownerId Int?
+  owner   User?     @relation("OwnedApartments", fields: [ownerId], references: [id])
 
   tenants User[]   @relation("TenantApartments")
   garages Garage[] @relation("ApartmentGarages")
