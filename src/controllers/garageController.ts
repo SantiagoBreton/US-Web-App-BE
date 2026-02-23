@@ -215,8 +215,24 @@ export const assignGarage = async (req: Request, res: Response) => {
     const garage = await prisma.garage.findUnique({ where: { id } });
     if (!garage) return res.status(404).json({ message: "Cochera no encontrada" });
 
+    // Solo se pueden asignar cocheras fijas de forma permanente
+    if (garage.type !== "fija") {
+      return res.status(400).json({ 
+        message: `No se puede asignar una cochera de tipo "${garage.type}". Solo las cocheras fijas pueden asignarse permanentemente a unidades. Las cocheras de cortesía y visitante se asignan mediante sus respectivos procesos de tiempo limitado.` 
+      });
+    }
+
     const apartment = await prisma.apartment.findUnique({ where: { id: apartmentId } });
     if (!apartment) return res.status(404).json({ message: "Apartamento no encontrado" });
+
+    // Si la cochera está cambiando de apartamento, desasignar todos los vehículos
+    if (garage.apartmentId && garage.apartmentId !== apartmentId) {
+      await prisma.vehicle.updateMany({
+        where: { garageId: id },
+        data: { garageId: null }
+      });
+      console.log(`[ADMIN] Vehicles unassigned from garage ${garage.number} due to apartment change`);
+    }
 
     const updated = await prisma.garage.update({
       where: { id },
@@ -243,9 +259,23 @@ export const unassignGarage = async (req: Request, res: Response) => {
     const garage = await prisma.garage.findUnique({ where: { id } });
     if (!garage) return res.status(404).json({ message: "Cochera no encontrada" });
 
+    // Solo se pueden desasignar cocheras fijas
+    if (garage.type !== "fija") {
+      return res.status(400).json({ 
+        message: `No se puede desasignar una cochera de tipo "${garage.type}". Solo las cocheras fijas pueden desasignarse de unidades. Las cocheras de cortesía y visitante se gestionan mediante sus respectivos procesos.` 
+      });
+    }
+
     if (!garage.apartmentId) {
       return res.status(400).json({ message: "La cochera ya no tiene unidad asignada" });
     }
+
+    // Desasignar todos los vehículos de esta cochera
+    await prisma.vehicle.updateMany({
+      where: { garageId: id },
+      data: { garageId: null }
+    });
+    console.log(`[ADMIN] Vehicles unassigned from garage ${garage.number}`);
 
     const updated = await prisma.garage.update({
       where: { id },
