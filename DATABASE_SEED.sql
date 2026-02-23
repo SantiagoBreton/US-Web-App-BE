@@ -52,7 +52,8 @@ INSERT INTO "user_notification_types" (name, label) VALUES
   ('reserva_confirmada', 'Reserva Confirmada'),
   ('reserva_cancelada', 'Reserva Cancelada'),
   ('reserva_modificada', 'Reserva Modificada'),
-  ('reserva_rechazada', 'Reserva Rechazada')
+  ('reserva_rechazada', 'Reserva Rechazada'),
+  ('reserva_pendiente', 'Reserva Pendiente de Aprobación')
 ON CONFLICT (name) DO NOTHING;
 
 -- 5. TIPOS DE NOTIFICACIONES DE ADMIN
@@ -67,7 +68,8 @@ INSERT INTO "user_notification_types" (name, label) VALUES
   ('reserva_confirmada', 'Reserva Confirmada'),
   ('reserva_cancelada', 'Reserva Cancelada'),
   ('reserva_modificada', 'Reserva Modificada'),
-  ('reserva_rechazada', 'Reserva Rechazada')
+  ('reserva_rechazada', 'Reserva Rechazada'),
+  ('reserva_pendiente', 'Reserva Pendiente de Aprobación')
 ON CONFLICT (name) DO NOTHING;
 
 -- 7. USUARIOS (Admin y Propietarios primero, sin apartmentId)
