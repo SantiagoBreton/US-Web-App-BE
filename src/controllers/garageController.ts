@@ -283,8 +283,10 @@ export const getMyGarages = async (req: Request, res: Response) => {
       where: { apartmentId: user.apartmentId },
       include: {
         vehicles: {
-          where: { userId },
-          select: { id: true, licensePlate: true, brand: true, model: true, color: true }
+          select: {
+            id: true, licensePlate: true, brand: true, model: true, color: true,
+            user: { select: { id: true, name: true } }
+          }
         }
       },
       orderBy: { number: "asc" }
