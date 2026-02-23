@@ -134,15 +134,17 @@ export const approveReservation = async (req: Request, res: Response) => {
           }
         });
 
-        const cancelledType = await tx.userNotificationType.findUnique({
-          where: { name: 'reservation_cancelled' }
+        const cancelledType = await tx.userNotificationType.upsert({
+          where: { name: 'reservation_cancelled' },
+          create: { name: 'reservation_cancelled', label: 'Reserva Cancelada' },
+          update: {},
         });
         
         await tx.userNotification.create({
           data: {
             userId: reservation.user.id,
             reservationId: reservationId,
-            typeId: cancelledType!.id,
+            typeId: cancelledType.id,
             title: 'Reserva Rechazada Automáticamente',
             message: `Tu reserva para ${reservation.amenity.name} fue rechazada porque otras reservas llenaron la capacidad disponible mientras tu solicitud estaba pendiente.`
           }
@@ -182,15 +184,17 @@ export const approveReservation = async (req: Request, res: Response) => {
         }
       });
 
-      const confirmedType = await tx.userNotificationType.findUnique({
-        where: { name: 'reservation_confirmed' }
+      const confirmedType = await tx.userNotificationType.upsert({
+        where: { name: 'reservation_confirmed' },
+        create: { name: 'reservation_confirmed', label: 'Reserva Confirmada' },
+        update: {},
       });
       
       await tx.userNotification.create({
         data: {
           userId: reservation.user.id,
           reservationId: reservationId,
-          typeId: confirmedType!.id,
+          typeId: confirmedType.id,
           title: 'Reserva Aprobada',
           message: `Tu reserva para ${reservation.amenity.name} ha sido aprobada por un administrador.`
         }
@@ -292,15 +296,17 @@ export const rejectReservation = async (req: Request, res: Response) => {
         ? `Tu reserva para ${reservation.amenity.name} ha sido rechazada. Motivo: ${reason}`
         : `Tu reserva para ${reservation.amenity.name} ha sido rechazada por un administrador.`;
 
-      const cancelledType = await tx.userNotificationType.findUnique({
-        where: { name: 'reservation_cancelled' }
+      const cancelledType = await tx.userNotificationType.upsert({
+        where: { name: 'reservation_cancelled' },
+        create: { name: 'reservation_cancelled', label: 'Reserva Cancelada' },
+        update: {},
       });
       
       await tx.userNotification.create({
         data: {
           userId: reservation.user.id,
           reservationId: reservationId,
-          typeId: cancelledType!.id,
+          typeId: cancelledType.id,
           title: 'Reserva Rechazada',
           message: notificationMessage
         }
@@ -449,15 +455,17 @@ export const cancelReservationAsAdmin = async (req: Request, res: Response) => {
         ? `Tu reserva para ${reservation.amenity.name} ha sido cancelada por un administrador. Motivo: ${reason}`
         : `Tu reserva para ${reservation.amenity.name} ha sido cancelada por un administrador.`;
 
-      const cancelledType = await tx.userNotificationType.findUnique({
-        where: { name: 'reservation_cancelled' }
+      const cancelledType = await tx.userNotificationType.upsert({
+        where: { name: 'reservation_cancelled' },
+        create: { name: 'reservation_cancelled', label: 'Reserva Cancelada' },
+        update: {},
       });
       
       await tx.userNotification.create({
         data: {
           userId: reservation.user.id,
           reservationId: reservationId,
-          typeId: cancelledType!.id,
+          typeId: cancelledType.id,
           title: 'Reserva Cancelada por Administrador',
           message: notificationMessage
         }
