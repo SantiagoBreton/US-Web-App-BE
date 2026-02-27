@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.env
+.env.*
+*.log
+.git
+.github
+k8s
+helm
+tests
+*.test.ts
+*.spec.ts
+README.md
+docker-compose.yml

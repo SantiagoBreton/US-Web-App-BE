@@ -1,0 +1,55 @@
+# Local development environment
+# Usage: docker compose up --build
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      target: builder          
+    command: sh -c "npx prisma migrate deploy && npm run dev"
+    container_name: us_be_api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/us_db
+      - JWT_SECRET=local_dev_secret_change_in_prod
+      - NODE_ENV=development
+      - EMAIL_USER=dev@placeholder.com
+      - EMAIL_PASS=placeholder
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src       
+    networks:
+      - us_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: us_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: us_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - us_network
+
+
+volumes:
+  postgres_data:
+
+networks:
+  us_network:
+    driver: bridge

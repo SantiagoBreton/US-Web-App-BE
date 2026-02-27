@@ -7,9 +7,9 @@ import {
   cancelReservation, 
   getAmenityReservations, 
   hideReservationFromUser 
-} from '../src/controllers/reservation.js';
-import { requireAuth } from '../src/auth_middleware.js';
-import { createTestUser, createTestAmenity, createTestReservation, cleanupRegisteredData, prisma } from './helpers.js';
+} from '../src/controllers/reservation';
+import { requireAuth } from '../src/auth_middleware';
+import { createTestUser, createTestAmenity, createTestReservation, cleanupRegisteredData, prisma } from './helpers';
 
 describe('Reservation Controller Tests', () => {
   let app: express.Application;

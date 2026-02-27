@@ -1,8 +1,8 @@
 import request from 'supertest';
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { validateAdmin } from '../src/middleware/adminMiddleware.js';
-import { createTestUser, createTestAdmin, cleanupRegisteredData, prisma } from './helpers.js';
+import { validateAdmin } from '../src/middleware/adminMiddleware';
+import { createTestUser, createTestAdmin, cleanupRegisteredData, prisma } from './helpers';
 
 describe('Admin Middleware Tests', () => {
   let app: express.Application;

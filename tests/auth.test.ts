@@ -7,11 +7,10 @@ import {
   register, 
   login, 
   forgotPassword, 
-  resetPassword, 
-  testEmail 
-} from '../src/controllers/authController.js';
-import { requireAuth } from '../src/auth_middleware.js';
-import { createTestUser, cleanupRegisteredData, generateTestEmail, prisma } from './helpers.js';
+  resetPassword
+} from '../src/controllers/authController';
+import { requireAuth } from '../src/auth_middleware';
+import { createTestUser, cleanupRegisteredData, generateTestEmail, prisma } from './helpers';
 
 describe('Authentication Controller Tests', () => {
   let app: express.Application;
@@ -41,7 +40,6 @@ describe('Authentication Controller Tests', () => {
     app.post('/auth/login', login);
     app.post('/auth/forgot-password', forgotPassword);
     app.post('/auth/reset-password', resetPassword);
-    app.post('/auth/test-email', testEmail);
 
     // Create initial test user
     testUser = await createTestUser();

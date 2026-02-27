@@ -1,0 +1,31 @@
+# RBAC: restrict what the us-be service account can do inside the cluster.
+# Principle of least privilege — only allow what the app actually needs.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: us-be-sa
+  namespace: us-app
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: us-be-role
+  namespace: us-app
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]     # read config only
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: us-be-rolebinding
+  namespace: us-app
+subjects:
+  - kind: ServiceAccount
+    name: us-be-sa
+    namespace: us-app
+roleRef:
+  kind: Role
+  apiRef: us-be-role
+  apiGroup: rbac.authorization.k8s.io

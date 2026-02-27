@@ -122,6 +122,16 @@ async function updateExpiredReservations() {
   }
 }
 
+// Health check endpoint — used by Docker, Kubernetes liveness/readiness probes, and Render
+app.get("/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ status: "ok", db: "reachable" });
+  } catch {
+    res.status(503).json({ status: "error", db: "unreachable" });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT}`);
   
