@@ -160,13 +160,11 @@ export const createReservation = async (req: Request, res: Response) => {
 
       if (amenity.requiresApproval) {
         
-        const userNotificationType = await tx.userNotificationType.findUnique({
-          where: { name: 'reserva_pendiente' }
+        const userNotificationType = await tx.userNotificationType.upsert({
+          where: { name: 'reserva_pendiente' },
+          create: { name: 'reserva_pendiente', label: 'Reserva Pendiente de Aprobación' },
+          update: {},
         });
-
-        if (!userNotificationType) {
-          throw new Error('Tipo de notificación no encontrado: reserva_pendiente');
-        }
 
         await tx.userNotification.create({
           data: {
@@ -183,13 +181,11 @@ export const createReservation = async (req: Request, res: Response) => {
           select: { id: true }
         });
 
-        const adminNotificationType = await tx.adminNotificationType.findUnique({
-          where: { name: 'reserva_pendiente' }
+        const adminNotificationType = await tx.adminNotificationType.upsert({
+          where: { name: 'reserva_pendiente' },
+          create: { name: 'reserva_pendiente', label: 'Reserva Pendiente de Aprobación' },
+          update: {},
         });
-
-        if (!adminNotificationType) {
-          throw new Error('Tipo de notificación no encontrado: reserva_pendiente');
-        }
 
         await Promise.all(
           admins.map(admin =>

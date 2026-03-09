@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: us-be-svc
+  namespace: us-app
+  labels:
+    app: us-be
+spec:
+  type: ClusterIP          # traffic enters via the Ingress; internal pods use ClusterIP
+  selector:
+    app: us-be
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP

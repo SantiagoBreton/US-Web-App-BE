@@ -1,0 +1,27 @@
+# Requires an Ingress controller (e.g. ingress-nginx) installed in the cluster.
+# TLS is terminated at the Ingress level; pods receive plain HTTP on port 3000.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: us-be-ingress
+  namespace: us-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"    # automatic TLS via cert-manager
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.us-app.com
+      secretName: us-be-tls
+  rules:
+    - host: api.us-app.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: us-be-svc
+                port:
+                  name: http

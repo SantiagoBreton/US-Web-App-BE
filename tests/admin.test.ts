@@ -15,9 +15,9 @@ import {
   getAllAmenities,
   deleteAmenity,
   getAmenityDetailReservations
-} from '../src/controllers/adminController.js';
-import { validateAdmin } from '../src/middleware/adminMiddleware.js';
-import { createTestUser, createTestAdmin, createTestAmenity, createTestApartment, createTestReservation, cleanupRegisteredData, prisma } from './helpers.js';
+} from '../src/controllers/admin';
+import { validateAdmin } from '../src/middleware/adminMiddleware';
+import { createTestUser, createTestAdmin, createTestAmenity, createTestApartment, createTestReservation, cleanupRegisteredData, prisma } from './helpers';
 
 describe('Admin Controller Tests', () => {
   let app: express.Application;
